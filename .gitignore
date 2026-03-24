@@ -1,0 +1,9 @@
+# 忽略 node_modules 文件夹
+docker/yolov8/ultralytics-8.3.57/
+images
+
+test_platform
+
+*.pyc
+
+docker/export/opensource_model_zoo.v020.tar.gz
