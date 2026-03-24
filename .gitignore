@@ -6,4 +6,5 @@ test_platform
 
 *.pyc
 
-docker/export/opensource_model_zoo.v020.tar.gz
+
+
