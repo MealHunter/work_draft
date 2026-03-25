@@ -37,7 +37,7 @@ while read path action file; do
         python /app/ultralytics/export.py \
             --model /share/onnx_model/latest/weights/best.pt \
             --format onnx \
-            --imgsz 352 640
+            --imgsz 360 640
         
         if [ $? -eq 0 ]; then
             echo "Training and export finished."

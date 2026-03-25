@@ -60,7 +60,7 @@ async def sell_item(req: BuyRequest):
     ten_df = ten_df[~ten_df['代码'].str.startswith(('300', '301', '688'))]
     
     # 保存上午的数据，用于统计股票当天的涨幅
-    ten_df.to_csv('D:/yyb/project/python_test/invest/shangwu.csv', index=False)
+    ten_df.to_csv('D:/yyb/github/draft/invest/shangwu.csv', index=False)
 
     # 如果没有持仓直接返回
     if holdings_df.empty:
@@ -84,6 +84,7 @@ async def sell_item(req: BuyRequest):
     current_df['卖出金额'] = current_df['最新价'] * current_df['买入数量']
     current_df['手续费'] = current_df['卖出金额'].apply(lambda x: handling_fee(x, 'sell'))
     current_df['收益'] = (current_df['最新价'] - current_df['昨天价格']) * current_df['买入数量'] - current_df['手续费']
+    current_df.to_csv('D:/yyb/github/draft/invest/sell_results.csv', index=False)
     print(current_df)
 
     # 本金 = 原本金 + 卖出金额 - 手续费
@@ -141,7 +142,7 @@ async def buy_item(req: BuyRequest):
     # 获取股票数据，akshare失败时使用备用方案
     df_zh = stock_zh_a_spot_em_self()
 
-    shangwu_df = pd.read_csv('D:/yyb/project/python_test/invest/shangwu.csv')
+    shangwu_df = pd.read_csv('D:/yyb/github/draft/invest/shangwu.csv')
 
     # 重命名列
     shangwu_df = shangwu_df[['代码', '最新价']].rename(columns={'最新价': '早上价格'})
@@ -180,7 +181,7 @@ async def buy_item(req: BuyRequest):
 
     print(df_filtered)
     # 将这个表格保存到本地
-    # df_filtered.to_csv('D:/yyb/project/python_test/invest/jvji.csv', index=False)
+    # df_filtered.to_csv('D:/yyb/github/draft/invest/jvji.csv', index=False)
     print("----------------------------------------------")
     if df_filtered.empty:
         return {"data": [], "benjin": benjin}

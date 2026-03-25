@@ -1,26 +1,57 @@
-FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
+# =========================
+# 1) 基础镜像
+# =========================
+FROM ubuntu:20.04
 
-WORKDIR /app
+ENV DEBIAN_FRONTEND=noninteractive
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
-    python3-pip \
+# =========================
+# 2) 系统依赖
+# =========================
+RUN apt update && apt install -y \
+	wget \
+	curl \
+	gnupg \
+	lsb-release \
     inotify-tools \
-    && rm -rf /var/lib/apt/lists/*
+	git \
+	unzip \
+	&& rm -rf /var/lib/apt/lists/*
+ 
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
+	&& bash miniconda.sh -b -p /root/miniconda3 \
+	&& rm miniconda.sh
+
+# 配置 conda PATH（Docker 正确方式）
+ENV PATH=/root/miniconda3/bin:$PATH
+
+# 初始化conda
+RUN conda init bash
+
+# =========================
+# 6) 进入容器默认工作目录
+# =========================
+WORKDIR /root/workdir
+
+#==========================
+# 验证安装
+#==========================
+RUN conda --version
+
+
+
+# =========================
+# 7) 基于base创建yolov8运行环境
+# =========================
+RUN pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/cu130
+
 
 # 复制整个项目目录
 COPY ultralytics-8.3.57 /app/ultralytics
 
-# 设置 PYTHONPATH，让项目可以正确导入
-ENV PYTHONPATH=/app:$PYTHONPATH
-
-# 安装项目依赖（editable 模式，包含 export 支持 ONNX）
-RUN pip install --no-cache-dir -e /app/ultralytics[export]
 
 # 创建输出目录
 RUN mkdir -p /app/output /workdir/share/dataset /workdir/share/onnx_model
 
-WORKDIR /app
-
-# 默认命令
-CMD ["bash"]
+CMD ["/bin/bash"]

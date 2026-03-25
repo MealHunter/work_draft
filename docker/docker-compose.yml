@@ -16,7 +16,7 @@ services:
 
   goke7605:
     container_name: goke7605
-    image: ubuntu18.04_xmtvm:AI_TOOLCHAIN_V020_V3010_145_20250827
+    image: ubuntu18.04:goke7605
     volumes:
       - /workdir/share:/share
     working_dir: /share
