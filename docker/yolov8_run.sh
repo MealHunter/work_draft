@@ -1,10 +1,5 @@
 #!/bin/bash
 
-apt update && apt install -y inotify-tools
-
-# 创建必要目录
-mkdir -p /share/dataset /share/onnx_model
-
 # 检查 data.yaml 是否存在
 if [ ! -f /share/dataset/data.yaml ]; then
     echo "Warning: data.yaml not found in /share/dataset, waiting..."
@@ -20,7 +15,7 @@ while read path action file; do
         echo "Dataset changed: $file, start training..."
         
         # 训练
-        python /app/ultralytics/train.py \
+        python /share/train/train.py \
             --data /share/dataset/data.yaml \
             --project /share/onnx_model \
             --name latest \
@@ -34,7 +29,7 @@ while read path action file; do
         fi
         
         # 导出
-        python /app/ultralytics/export.py \
+        python /share/ultralytics/export.py \
             --model /share/onnx_model/latest/weights/best.pt \
             --format onnx \
             --imgsz 360 640

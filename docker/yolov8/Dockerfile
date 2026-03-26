@@ -16,6 +16,9 @@ RUN apt update && apt install -y \
     inotify-tools \
 	git \
 	unzip \
+    libgl1 \
+    libglib2.0-0 \
+    vim \
 	&& rm -rf /var/lib/apt/lists/*
  
 
@@ -46,12 +49,6 @@ RUN conda --version
 # =========================
 RUN pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url https://download.pytorch.org/whl/cu130
 
-
-# 复制整个项目目录
-COPY ultralytics-8.3.57 /app/ultralytics
-
-
-# 创建输出目录
-RUN mkdir -p /workdir/share/dataset /workdir/share/onnx_model
+RUN pip install ultralytics -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 CMD ["/bin/bash"]

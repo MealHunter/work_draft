@@ -1,11 +1,6 @@
 #!/bin/bash
 
-apt update && apt install -y inotify-tools
-
-# 创建必要目录
-mkdir -p /share/onnx_model /share/goke_model
-
-TOOLCHAIN_DIR="/root/xmedia/opensource_model_zoo_v020"
+TOOLCHAIN_DIR="/share/opensource_model_zoo"
 
 echo "Waiting for new onnx model..."
 

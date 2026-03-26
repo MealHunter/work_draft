@@ -1,169 +1,253 @@
-# YOLOv8 Docker 训练与部署项目
+# YOLOv8 Docker 训练与导出项目
 
-基于 Docker 的 YOLOv8 模型训练、自动导出及模型转换流水线项目。
+基于 Docker Compose 的自动化流水线项目，用于监听数据集变化、执行 YOLOv8 训练、导出 ONNX 模型，并调用 Goke 工具链完成模型转换。
 
 ## 项目概述
 
-本项目实现了一个自动化机器学习流水线，包含以下两个核心服务：
+当前项目包含两个常驻服务：
 
-1. **YOLOv8 训练服务** - 监听数据集变化，自动训练模型并导出 ONNX 格式
-2. **Goke 转换服务** - 监听 ONNX 模型生成，自动转换为 xmm 格式
+1. **yolov8**：监听 `/share/dataset` 目录中的 `*.yaml` 变更，触发训练并导出 ONNX。
+2. **goke7605**：监听 `/share/onnx_model` 目录中的 `.onnx` 文件，调用工具链转换为 `.xmm`。
 
 ## 架构
 
 ```
 ┌─────────────────┐     ┌─────────────────┐
-│   YOLOv8 容器   │     │   Goke 容器     │
+│   yolov8 容器   │     │  goke7605 容器  │
 │                 │     │                 │
-│ - 数据集监控    │     │ - ONNX 模型监控 │
-│ - 模型训练      │────▶│ - 模型转换      │
-│ - ONNX 导出    │     │ - xmm 模型输出  │
+│ - 监听数据集    │     │ - 监听 ONNX     │
+│ - 执行训练      │────▶│ - 执行模型转换  │
+│ - 导出 ONNX     │     │ - 输出 XMM      │
 └─────────────────┘     └─────────────────┘
          │                       │
-         └──────────┬──────────────┘
+         └──────────┬────────────┘
                     │
-              /share 共享目录
+             /workdir/share
 ```
 
 ## 目录结构
 
 ```
 docker/
-├── docker-compose.yml      # Docker Compose 配置
-├── yolov8/                 # YOLOv8 项目
-│   ├── Dockerfile         # YOLOv8 容器镜像
-│   └── ultralytics-8.3.57/# Ultralytics 库
-│       ├── yolov8_train.py       # 训练脚本
-│       ├── yolov8_train_pose.py # 姿态估计训练
-│       ├── yolov8_train_fish.py # 鱼类检测训练
-│       ├── yolov8_process.py    # 数据处理脚本
-│       └── ...
-├── yolov8_run.sh          # YOLOv8 容器启动脚本
-└── goke_run.sh            # Goke 容器启动脚本
+├── docker-compose.yml   # Compose 配置
+├── yolov8/
+│   ├── Dockerfile       # YOLOv8 镜像
+│   └── .dockerignore
+├── export/
+│   ├── Dockerfile       # Goke 工具链构建镜像示例
+│   ├── Dockerfile.txt   # 基于预制镜像的简化示例
+│   └── README.txt
+├── yolov8_run.sh        # 训练与导出入口脚本
+└── goke_run.sh          # ONNX 转 xmm 入口脚本
 ```
 
-## 快速开始
-
-### 前置要求
+## 环境要求
 
 - Docker
 - Docker Compose
-- NVIDIA GPU (用于 YOLOv8 训练)
+- NVIDIA GPU（用于 YOLOv8 训练）
 - NVIDIA Container Toolkit
+- 主机存在共享目录：`/workdir/share`
 
-### 构建镜像
+建议在共享目录中准备以下结构：
 
-```bash
-# 构建 YOLOv8 镜像
-cd docker/yolov8
-docker build -t yolov8_image .
-
-# 或者使用 Docker Compose 自动构建
-cd docker
-docker-compose build
+```text
+/workdir/share/
+├── dataset/                 # 训练数据集，需包含 data.yaml
+├── onnx_model/              # YOLO 导出的 ONNX 输出目录
+├── goke_model/              # Goke 转换后的 xmm 输出目录
+├── train/train.py           # 训练脚本
+├── ultralytics/export.py    # 导出脚本
+└── opensource_model_zoo/    # Goke 转换依赖目录
 ```
 
-### 启动服务
+## 镜像说明
+
+### 1. yolov8 镜像
+
+`docker/yolov8/Dockerfile` 当前基于：
+
+- `ubuntu:20.04`
+- Miniconda
+- `torch==2.9.0`
+- `torchvision==0.24.0`
+- `torchaudio==2.9.0`
+- `ultralytics`
+
+构建命令：
+
+```bash
+cd docker/yolov8
+docker build -t yolov8_image .
+```
+
+### 2. goke7605 镜像
+
+`docker-compose.yml` 当前直接使用镜像：
+
+```text
+ubuntu18.04:goke7605
+```
+
+也就是说，启动 Compose 前，需要确保本地已经存在该镜像。
+
+如果你需要自己构建工具链镜像，可参考：
+
+- `docker/export/Dockerfile`
+- `docker/export/Dockerfile.txt`
+- `docker/export/README.txt`
+
+## 启动服务
+
+在确认本地已有以下镜像后启动：
+
+- `yolov8_image`
+- `ubuntu18.04:goke7605`
+
+启动命令：
 
 ```bash
 cd docker
 docker-compose up -d
 ```
 
-### 查看日志
+停止服务：
 
 ```bash
-# 查看 YOLOv8 服务日志
-docker logs -f yolov8
-
-# 查看 Goke 服务日志
-docker logs -f goke
+docker-compose down
 ```
 
-## 服务详情
-
-### YOLOv8 训练服务
-
-- **基础镜像**: `pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime`
-- **功能**:
-  - 监听 `/share/dataset` 目录变化
-  - 检测到新数据后自动开始训练
-  - 训练完成后自动导出 ONNX 模型
-  - 输出模型保存到 `/share/onnx_model`
-- **训练参数**:
-  - Epochs: 50
-  - Batch Size: 32
-  - 图像尺寸: 640x352
-
-### Goke 转换服务
-
-- **功能**:
-  - 监听 `/share/onnx_model` 目录
-  - 检测到新的 `.onnx` 文件后自动转换
-  - 使用 `convert_tool` 转换为 xmm 格式
-  - 输出模型保存到 `/share/xmm_model`
-
-## 数据目录
-
-| 目录 | 描述 |
-|------|------|
-| `/share/dataset` | 训练数据集目录 |
-| `/share/onnx_model` | ONNX 模型输出目录 |
-| `/share/xmm_model` | xmm 模型输出目录 |
-
-## 自定义训练
-
-### 修改训练参数
-
-编辑 `yolov8_run.sh` 文件：
+查看状态：
 
 ```bash
-python /app/ultralytics/train.py \
+docker-compose ps
+```
+
+查看日志：
+
+```bash
+docker logs -f yolov8
+docker logs -f goke7605
+```
+
+## 服务行为说明
+
+### yolov8 服务
+
+启动命令来自 `docker-compose.yml`：
+
+```yaml
+command: bash /share/yolov8_run.sh
+```
+
+脚本逻辑见 `yolov8_run.sh`：
+
+- 监听 `/share/dataset`
+- 当检测到 `*.yaml` 文件写入或移动完成时触发训练
+- 调用：
+
+```bash
+python /share/train/train.py \
     --data /share/dataset/data.yaml \
     --project /share/onnx_model \
     --name latest \
-    --epochs 100 \      # 修改 epoch 数
-    --batch 16         # 修改 batch size
+    --epochs 50 \
+    --batch 32
 ```
 
-### 使用自定义数据集
+- 训练完成后调用：
 
-1. 将数据集放入 `/share/dataset` 目录
-2. 确保数据集配置文件 `data.yaml` 存在
-3. 服务会自动检测到变化并开始训练
+```bash
+python /share/ultralytics/export.py \
+    --model /share/onnx_model/latest/weights/best.pt \
+    --format onnx \
+    --imgsz 360 640
+```
+
+### goke7605 服务
+
+启动命令来自 `docker-compose.yml`：
+
+```yaml
+command: bash /share/goke_run.sh
+```
+
+脚本逻辑见 `goke_run.sh`：
+
+- 监听 `/share/onnx_model`
+- 检测到新的 `.onnx` 文件后，根据文件名匹配任务目录
+- 默认依赖：
+
+```text
+/share/opensource_model_zoo
+```
+
+- 执行 `python build.py`
+- 生成的 `.xmm` 文件移动到：
+
+```text
+/share/goke_model
+```
+
+## 数据与输出目录
+
+| 目录 | 说明 |
+|------|------|
+| `/share/dataset` | 训练数据集目录，需包含 `data.yaml` |
+| `/share/onnx_model` | YOLOv8 导出的 ONNX 模型目录 |
+| `/share/goke_model` | Goke 转换后的 `.xmm` 输出目录 |
+| `/share/opensource_model_zoo` | 模型转换依赖目录 |
+
+## 自定义训练
+
+如需调整训练参数，编辑 `docker/yolov8_run.sh` 中这一段：
+
+```bash
+python /share/train/train.py \
+    --data /share/dataset/data.yaml \
+    --project /share/onnx_model \
+    --name latest \
+    --epochs 50 \
+    --batch 32
+```
+
+如需调整导出参数，编辑：
+
+```bash
+python /share/ultralytics/export.py \
+    --model /share/onnx_model/latest/weights/best.pt \
+    --format onnx \
+    --imgsz 360 640
+```
 
 ## 常用命令
 
 ```bash
-# 启动所有服务
-docker-compose up -d
+# 构建 yolov8 镜像
+docker build -t yolov8_image docker/yolov8
 
-# 停止所有服务
-docker-compose down
+# 启动服务
+docker-compose -f docker/docker-compose.yml up -d
 
-# 重启特定服务
-docker-compose restart yolov8
+# 查看日志
+docker logs -f yolov8
+docker logs -f goke7605
 
-# 查看容器状态
-docker-compose ps
+# 进入容器
+docker exec -it yolov8 bash
+docker exec -it goke7605 bash
 
-# 查看实时日志
-docker-compose logs -f
+# 停止服务
+docker-compose -f docker/docker-compose.yml down
 ```
-
-## 依赖
-
-- Python 3.8+
-- PyTorch 2.2.0
-- Ultralytics YOLOv8
-- CUDA 12.1
-- cuDNN 8
 
 ## 注意事项
 
-1. 确保主机已安装 NVIDIA 驱动和 Docker NVIDIA 运行时
-2. 共享目录 `/share` 需要在主机上预先创建并具有正确权限
-3. Goke 服务的 `convert_tool` 需要自行准备
+1. `docker-compose.yml` 当前使用的是固定镜像名，不会自动构建镜像。
+2. `yolov8` 服务依赖 NVIDIA 运行时，Compose 中已配置 `runtime: nvidia`。
+3. 两个服务都依赖宿主机挂载目录 `/workdir/share:/share`。
+4. `goke7605` 服务依赖 `/share/opensource_model_zoo` 内已有对应模型目录和 `build.py`。
+5. `goke7605` 服务的输出目录实际为 `/share/goke_model`，不是 `/share/xmm_model`。
 
 ## 许可证
 

@@ -85,10 +85,6 @@ RUN xmtvmc --version
 RUN mqbench --version
 RUN onnx2torch --version
 
-# 复制整个项目目录
-COPY opensource_model_zoo.v020.tar.gz /xmedia/
-
-RUN cd /xmedia && tar xf opensource_model_zoo.v020.tar.gz && rm -rf opensource_model_zoo.v020.tar.gz
 
 WORKDIR /xmedia
 
