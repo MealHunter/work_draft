@@ -41,13 +41,13 @@ function buyStock(stockCode, quantity) {
 
     // 1️⃣ 点击股票代码输入框
     click(670, 672);
-    sleep(2000);
+    sleep(500);
 
     // 2️⃣ 输入股票代码
     // setText(stockCode);
     // sleep(3000);
     inputNumberByKeyboard(stockCode);
-    sleep(2000);
+    sleep(500);
 
     // 4️⃣ 找到"买入数量"输入框
     click(735, 1225);   // 买入数量区域
@@ -55,33 +55,33 @@ function buyStock(stockCode, quantity) {
 
     // 用"券商键盘"输入
     inputNumberByKeyboard(quantity);
-    sleep(2000);
+    sleep(500);
 
     // 5️⃣ 点击买入
     let buyBtns = text("买入").find();
     if (buyBtns.size() > 0) {
         buyBtns.get(buyBtns.size() - 1).click();
         console.log("✅ 点击最后一个【买入】");
-        sleep(1500);
+        sleep(500);
     }
-    sleep(1500);
+    sleep(500);
     // 6️⃣ 确认买入
     let confirmBtn = textContains("确认买入").findOne(3000);
     if (confirmBtn) {
         confirmBtn.click();
         console.log("✅ 买入确认完成：", stockCode);
-        sleep(1500);
+        sleep(500);
     } else {
         console.log("⚠️ 未出现确认按钮，可能已自动成交或需要手动确认");
     }
 
-    sleep(1500);
+    sleep(500);
 
     let buyAnother = textContains("再委托一笔").findOne(3000);
     if (buyAnother) {
         buyAnother.click();
         console.log("✅ 点击【再委托一笔】继续下一笔");
-        sleep(1500);
+        sleep(500);
     }else{
         console.log("⚠️ 未找到【再委托一笔】，使用坐标点击继续");
         click(1049, 1706);
@@ -137,7 +137,7 @@ if (needUnlock()) {
 // 5️⃣ 启动微信
 app.launchApp("国信金太阳");
 console.log("starting app...");
-sleep(2000);
+sleep(500);
 
 // 6️⃣ 点击【我的】
 // 方式一：文字（最稳）
@@ -227,7 +227,7 @@ for (let i = 0; i < data.length; i++) {
     buyStock(code, qty);
 
     // 防止过快操作（非常重要）
-    sleep(1500);
+    sleep(500);
 }
 
 // 广告位：715，2308

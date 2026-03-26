@@ -40,11 +40,11 @@ function sellStock(stockCode, quantity) {
 
     // 1️⃣ 点击股票代码输入框
     click(670, 672);
-    sleep(2000);
+    sleep(500);
 
     // 2️⃣ 输入股票代码
     inputNumberByKeyboard(stockCode);
-    sleep(2000);
+    sleep(500);
 
     // 3️⃣ 找到"卖出数量"输入框并点击
     click(735, 1225);
@@ -52,34 +52,34 @@ function sellStock(stockCode, quantity) {
 
     // 4️⃣ 用虚拟键盘输入数量
     inputNumberByKeyboard(quantity);
-    sleep(2000);
+    sleep(500);
 
     // 5️⃣ 点击卖出按钮
     let sellBtns = text("卖出").find();
     if (sellBtns.size() > 0) {
         sellBtns.get(sellBtns.size() - 1).click();
         console.log("✅ 点击最后一个【卖出】");
-        sleep(1500);
+        sleep(500);
     }
-    sleep(1500);
+    sleep(500);
 
     // 6️⃣ 确认卖出（如果有确认按钮）
     let confirmBtn = textContains("确认卖出").findOne(3000);
     if (confirmBtn) {
         confirmBtn.click();
         console.log("✅ 卖出确认完成：", stockCode);
-        sleep(1500);
+        sleep(500);
     } else {
         console.log("⚠️ 未出现确认按钮，可能已自动成交");
     }
 
-    sleep(1500);
+    sleep(500);
 
     let buyAnother = textContains("再委托一笔").findOne(3000);
     if (buyAnother) {
         buyAnother.click();
         console.log("✅ 点击【再委托一笔】继续下一笔");
-        sleep(1500);
+        sleep(500);
     }else{
         console.log("⚠️ 未找到【再委托一笔】，使用坐标点击继续");
         click(1049, 1706);
@@ -136,7 +136,7 @@ if (needUnlock()) {
 // 5️⃣ 启动微信
 app.launchApp("国信金太阳");
 console.log("starting app...");
-sleep(2000);
+sleep(500);
 
 // 6️⃣ 点击【交易】
 // 方式一：文字（最稳）
@@ -234,7 +234,7 @@ for (let i = 0; i < data.length; i++) {
     sellStock(code, qty);
 
     // 防止过快操作（非常重要）
-    sleep(1500);
+    sleep(500);
 }
 
 console.log("全部卖出完成，当前本金:", sellResult.benjin);

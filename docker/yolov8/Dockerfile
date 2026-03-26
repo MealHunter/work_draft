@@ -52,6 +52,6 @@ COPY ultralytics-8.3.57 /app/ultralytics
 
 
 # 创建输出目录
-RUN mkdir -p /app/output /workdir/share/dataset /workdir/share/onnx_model
+RUN mkdir -p /workdir/share/dataset /workdir/share/onnx_model
 
 CMD ["/bin/bash"]
