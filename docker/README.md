@@ -6,121 +6,71 @@
 
 当前项目包含两个常驻服务：
 
-1. **yolov8**：监听 `/share/dataset` 目录中的 `*.yaml` 变更，触发训练并导出 ONNX。
-2. **goke7605**：监听 `/share/onnx_model` 目录中的 `.onnx` 文件，调用工具链转换为 `.xmm`。
+1. **yolov8**：监听宿主机共享目录中的数据集变化，触发训练并导出 ONNX。
+2. **goke7605**：监听 ONNX 输出目录中的新模型，调用镜像内工具链完成 `.xmm` 转换。
 
-## 架构
-
-```
-┌─────────────────┐     ┌─────────────────┐
-│   yolov8 容器   │     │  goke7605 容器  │
-│                 │     │                 │
-│ - 监听数据集    │     │ - 监听 ONNX     │
-│ - 执行训练      │────▶│ - 执行模型转换  │
-│ - 导出 ONNX     │     │ - 输出 XMM      │
-└─────────────────┘     └─────────────────┘
-         │                       │
-         └──────────┬────────────┘
-                    │
-             /workdir/share
-```
-
-## 目录结构
-
-```
-docker/
-├── docker-compose.yml   # Compose 配置
-├── yolov8/
-│   ├── Dockerfile       # YOLOv8 镜像
-│   └── .dockerignore
-├── export/
-│   ├── Dockerfile       # Goke 工具链构建镜像示例
-│   ├── Dockerfile.txt   # 基于预制镜像的简化示例
-│   └── README.txt
-├── yolov8_run.sh        # 训练与导出入口脚本
-└── goke_run.sh          # ONNX 转 xmm 入口脚本
-```
-
-## 环境要求
-
-- Docker
-- Docker Compose
-- NVIDIA GPU（用于 YOLOv8 训练）
-- NVIDIA Container Toolkit
-- 主机存在共享目录：`/workdir/share`
-
-建议在共享目录中准备以下结构：
+## 当前目录结构
 
 ```text
-/workdir/share/
+train_and_export/
+├── docker-compose.yml
+├── README.md
+├── yolov8/
+│   ├── Dockerfile
+│   ├── Dockerfile.txt
+│   ├── .dockerignore
+│   ├── yolov8_run.sh
+│   └── ultralytics-8.3.57/
+├── export/
+│   ├── Dockerfile
+│   ├── Dockerfile.txt
+│   ├── README.txt
+│   ├── goke_run.sh
+│   ├── AI_TOOLCHAIN_V020_V3010_*.tar.gz
+│   └── opensource_model_zoo.v020.tar.gz
+└── train/
+    ├── train.py
+    └── export.py
+```
+
+## 宿主机共享目录
+
+容器会挂载以下宿主机目录：
+
+```text
+/home/yang.yongbiao/workdir/share:/root/share
+```
+
+建议宿主机准备如下结构：
+
+```text
+/home/yang.yongbiao/workdir/share/
 ├── dataset/                 # 训练数据集，需包含 data.yaml
 ├── onnx_model/              # YOLO 导出的 ONNX 输出目录
 ├── goke_model/              # Goke 转换后的 xmm 输出目录
-├── train/train.py           # 训练脚本
-├── ultralytics/export.py    # 导出脚本
-└── opensource_model_zoo/    # Goke 转换依赖目录
+└── train/
+    ├── train.py             # 训练脚本（可直接修改）
+    └── export.py            # 导出脚本（可直接修改）
 ```
 
-## 镜像说明
+## Compose 启动方式
 
-### 1. yolov8 镜像
-
-`docker/yolov8/Dockerfile` 当前基于：
-
-- `ubuntu:20.04`
-- Miniconda
-- `torch==2.9.0`
-- `torchvision==0.24.0`
-- `torchaudio==2.9.0`
-- `ultralytics`
-
-构建命令：
+在项目根目录直接执行：
 
 ```bash
-cd docker/yolov8
-docker build -t yolov8_image .
-```
-
-### 2. goke7605 镜像
-
-`docker-compose.yml` 当前直接使用镜像：
-
-```text
-ubuntu18.04:goke7605
-```
-
-也就是说，启动 Compose 前，需要确保本地已经存在该镜像。
-
-如果你需要自己构建工具链镜像，可参考：
-
-- `docker/export/Dockerfile`
-- `docker/export/Dockerfile.txt`
-- `docker/export/README.txt`
-
-## 启动服务
-
-在确认本地已有以下镜像后启动：
-
-- `yolov8_image`
-- `ubuntu18.04:goke7605`
-
-启动命令：
-
-```bash
-cd docker
-docker-compose up -d
+docker compose up -d --build
 ```
 
 停止服务：
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 查看状态：
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 查看日志：
@@ -130,104 +80,141 @@ docker logs -f yolov8
 docker logs -f goke7605
 ```
 
-## 服务行为说明
+## docker-compose 服务说明
 
-### yolov8 服务
+### yolov8
 
-启动命令来自 `docker-compose.yml`：
+- 镜像名：`yolov8_image`
+- 构建上下文：`./yolov8`
+- 启动命令：
 
 ```yaml
-command: bash /share/yolov8_run.sh
+command: bash /root/yolov8_run.sh
 ```
 
-脚本逻辑见 `yolov8_run.sh`：
+- 数据挂载：
 
-- 监听 `/share/dataset`
+```text
+/home/yang.yongbiao/workdir/share:/root/share
+```
+
+### goke7605
+
+- 镜像名：`ubuntu18.04:goke7605`
+- 构建上下文：`./export`
+- 启动命令：
+
+```yaml
+command: bash /root/goke_run.sh
+```
+
+- 数据挂载：
+
+```text
+/home/yang.yongbiao/workdir/share:/root/share
+```
+
+## 服务运行逻辑
+
+## 1. yolov8 服务
+
+入口脚本：
+
+```text
+yolov8/yolov8_run.sh
+```
+
+运行逻辑：
+
+- 监听 `/root/share/dataset`
 - 当检测到 `*.yaml` 文件写入或移动完成时触发训练
-- 调用：
+- 调用宿主机训练脚本：
 
 ```bash
-python /share/train/train.py \
-    --data /share/dataset/data.yaml \
-    --project /share/onnx_model \
+python /root/share/train/train.py \
+    --data /root/share/dataset/data.yaml \
+    --project /root/share/onnx_model \
     --name latest \
     --epochs 50 \
     --batch 32
 ```
 
-- 训练完成后调用：
+- 训练完成后调用宿主机导出脚本：
 
 ```bash
-python /share/ultralytics/export.py \
-    --model /share/onnx_model/latest/weights/best.pt \
+python /root/share/train/export.py \
+    --model /root/share/onnx_model/latest/weights/best.pt \
     --format onnx \
     --imgsz 360 640
 ```
 
-### goke7605 服务
+## 2. goke7605 服务
 
-启动命令来自 `docker-compose.yml`：
-
-```yaml
-command: bash /share/goke_run.sh
-```
-
-脚本逻辑见 `goke_run.sh`：
-
-- 监听 `/share/onnx_model`
-- 检测到新的 `.onnx` 文件后，根据文件名匹配任务目录
-- 默认依赖：
+入口脚本：
 
 ```text
-/share/opensource_model_zoo
+export/goke_run.sh
 ```
 
-- 执行 `python build.py`
-- 生成的 `.xmm` 文件移动到：
+运行逻辑：
+
+- 监听 `/root/share/onnx_model`
+- 检测到新的 `.onnx` 文件后，根据模型名匹配工具链目录
+- 默认工具链目录：
 
 ```text
-/share/goke_model
+/xmedia/opensource_model_zoo
 ```
 
-## 数据与输出目录
-
-| 目录 | 说明 |
-|------|------|
-| `/share/dataset` | 训练数据集目录，需包含 `data.yaml` |
-| `/share/onnx_model` | YOLOv8 导出的 ONNX 模型目录 |
-| `/share/goke_model` | Goke 转换后的 `.xmm` 输出目录 |
-| `/share/opensource_model_zoo` | 模型转换依赖目录 |
-
-## 自定义训练
-
-如需调整训练参数，编辑 `docker/yolov8_run.sh` 中这一段：
+- 执行：
 
 ```bash
-python /share/train/train.py \
-    --data /share/dataset/data.yaml \
-    --project /share/onnx_model \
-    --name latest \
-    --epochs 50 \
-    --batch 32
+python build.py
 ```
 
-如需调整导出参数，编辑：
+- 转换后的 `.xmm` 文件输出到：
+
+```text
+/root/share/goke_model
+```
+
+## 自定义修改说明
+
+### 修改训练逻辑
+
+直接编辑宿主机目录中的文件即可，无需重建镜像：
+
+```text
+/home/yang.yongbiao/workdir/share/train/train.py
+/home/yang.yongbiao/workdir/share/train/export.py
+```
+
+### 修改容器入口逻辑
+
+编辑以下文件后，需要重新构建镜像：
+
+```text
+yolov8/yolov8_run.sh
+export/goke_run.sh
+```
+
+修改后执行：
 
 ```bash
-python /share/ultralytics/export.py \
-    --model /share/onnx_model/latest/weights/best.pt \
-    --format onnx \
-    --imgsz 360 640
+docker compose up -d --build
 ```
 
 ## 常用命令
 
 ```bash
-# 构建 yolov8 镜像
-docker build -t yolov8_image docker/yolov8
+# 构建并启动
+docker compose up -d --build
 
-# 启动服务
-docker-compose -f docker/docker-compose.yml up -d
+# 仅启动已有容器
+docker compose up -d
+
+# 查看容器状态
+docker compose ps
 
 # 查看日志
 docker logs -f yolov8
@@ -238,16 +225,16 @@ docker exec -it yolov8 bash
 docker exec -it goke7605 bash
 
 # 停止服务
-docker-compose -f docker/docker-compose.yml down
+docker compose down
 ```
 
 ## 注意事项
 
-1. `docker-compose.yml` 当前使用的是固定镜像名，不会自动构建镜像。
-2. `yolov8` 服务依赖 NVIDIA 运行时，Compose 中已配置 `runtime: nvidia`。
-3. 两个服务都依赖宿主机挂载目录 `/workdir/share:/share`。
-4. `goke7605` 服务依赖 `/share/opensource_model_zoo` 内已有对应模型目录和 `build.py`。
-5. `goke7605` 服务的输出目录实际为 `/share/goke_model`，不是 `/share/xmm_model`。
+1. `yolov8` 服务依赖 NVIDIA 运行时。
+2. `train.py` 和 `export.py` 保留在宿主机共享目录中，方便直接修改。
+3. `goke7605` 依赖 `export/` 目录中的工具链压缩包在构建时可用。
+4. 如果在 Windows 中维护项目，可使用占位文件；在 Linux 实际构建时需替换为真实工具链内容。
+5. `docker compose` 新版不再需要 `version` 字段，建议不要在 `docker-compose.yml` 中保留。
 
 ## 许可证
 

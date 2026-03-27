@@ -1,23 +1,23 @@
 #!/bin/bash
 
 # 检查 data.yaml 是否存在
-if [ ! -f /share/dataset/data.yaml ]; then
-    echo "Warning: data.yaml not found in /share/dataset, waiting..."
+if [ ! -f /root/share/dataset/data.yaml ]; then
+    echo "Warning: data.yaml not found in /root/share/dataset, waiting..."
     sleep 30
 fi
 
 echo "Waiting for dataset update..."
 
-inotifywait -m /share/dataset -e moved_to -e close_write |
+inotifywait -m /root/share/dataset -e moved_to -e close_write |
 while read path action file; do
     # 只处理 yaml 文件变化
     if [[ "$file" == *.yaml ]]; then
         echo "Dataset changed: $file, start training..."
         
         # 训练
-        python /share/train/train.py \
-            --data /share/dataset/data.yaml \
-            --project /share/onnx_model \
+        python /root/share/train/train.py \
+            --data /root/share/dataset/data.yaml \
+            --project /root/share/onnx_model \
             --name latest \
             --epochs 50 \
             --batch 32
@@ -29,8 +29,8 @@ while read path action file; do
         fi
         
         # 导出
-        python /share/ultralytics/export.py \
-            --model /share/onnx_model/latest/weights/best.pt \
+        python /root/share/train/export.py \
+            --model /root/share/onnx_model/latest/weights/best.pt \
             --format onnx \
             --imgsz 360 640
         

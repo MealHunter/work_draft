@@ -1,10 +1,10 @@
 #!/bin/bash
 
-TOOLCHAIN_DIR="/share/opensource_model_zoo"
+TOOLCHAIN_DIR="/root/share/opensource_model_zoo"
 
 echo "Waiting for new onnx model..."
 
-inotifywait -m /share/onnx_model -e create |
+inotifywait -m /root/share/onnx_model -e create |
 while read path action file; do
     if [[ "$file" == *.onnx ]]; then
         # 等待文件写入完成

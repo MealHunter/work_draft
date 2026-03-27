@@ -51,4 +51,10 @@ RUN pip install torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0 --index-url h
 
 RUN pip install ultralytics -i https://pypi.tuna.tsinghua.edu.cn/simple
 
+# 复制整个项目目录
+COPY ultralytics-8.3.57 /root/workdir/ultralytics-8.3.57
+
+COPY yolov8_run.sh /root/yolov8_run.sh
+RUN chmod +x /root/yolov8_run.sh
+
 CMD ["/bin/bash"]

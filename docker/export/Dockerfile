@@ -8,31 +8,26 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN mkdir -p /root/xmedia
 WORKDIR /root/xmedia
 
-# 备份原有的源列表
-RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
-
-# 更新源
-RUN sed -i 's/archive.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list && \
-    sed -i 's/security.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
-RUN cat /etc/apt/sources.list
-RUN apt-get clean
-RUN apt-get -y update --fix-missing -o Acquire-by-hash=yes -o Acquire::https::No-Cache=True -o Acquire::http::No-Cache=True
-
-# 更新系统软件包列表并安装必要的依赖
-RUN apt-get install --fix-missing -y wget
-RUN apt-get install -y build-essential
-RUN apt-get install -y libgl1-mesa-glx
-RUN apt-get install -y libglib2.0-0
-RUN apt-get install -y vim
-RUN apt-get install -y git
-RUN apt-get install -y zip
-RUN apt-get install -y unzip
-RUN apt-get install -y inotify-tools
-RUN apt-get install --fix-missing -y llvm-8
-RUN apt-get install --fix-missing -y clang-8
-
-# 清理工作
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# 备份源、切换镜像并一次性安装系统依赖
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak \
+    && sed -i 's/archive.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list \
+    && sed -i 's/security.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list \
+    && apt-get clean \
+    && apt-get -y update --fix-missing -o Acquire-by-hash=yes -o Acquire::https::No-Cache=True -o Acquire::http::No-Cache=True \
+    && apt-get install --fix-missing -y \
+        wget \
+        build-essential \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        vim \
+        git \
+        zip \
+        unzip \
+        inotify-tools \
+        llvm-8 \
+        clang-8 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # 验证安装
 RUN llvm-config-8 --version
@@ -85,8 +80,15 @@ RUN xmtvmc --version
 RUN mqbench --version
 RUN onnx2torch --version
 
+# 复制整个项目目录
+COPY opensource_model_zoo.v020.tar.gz /root/xmedia/
 
-WORKDIR /xmedia
+RUN cd /root/xmedia && tar xf opensource_model_zoo.v020.tar.gz && rm -rf opensource_model_zoo.v020.tar.gz
+
+COPY goke_run.sh /root/goke_run.sh
+RUN chmod +x /root/goke_run.sh
+
+WORKDIR /root/xmedia
 
 # 默认命令
 CMD ["bash"]
