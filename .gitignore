@@ -6,7 +6,3 @@ test_platform
 
 *.pyc
 
-# 忽略日志文件
-*.csv
-*.json
-*.log
