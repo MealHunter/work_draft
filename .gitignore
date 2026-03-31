@@ -6,3 +6,7 @@ test_platform
 
 *.pyc
 
+*.csv
+
+*.log
+
