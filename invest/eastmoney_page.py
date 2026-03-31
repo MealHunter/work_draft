@@ -23,8 +23,8 @@ def stock_zh_a_spot_em_self() -> pd.DataFrame:
     
     # ===== 点击页面位置（左下角） =====
     # 先移动到页面，再偏移点击
-    driver.actions.move(200, 800).click()
-    print("已点击页面位置 (200, 800) - 左下角")
+    # driver.actions.move(200, 800).click()
+    # print("已点击页面位置 (200, 800) - 左下角")
 
     # ===== 切换到总市值 =====
     select_tag = driver.ele("x://select")
