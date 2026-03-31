@@ -1,0 +1,12 @@
+# 忽略 node_modules 文件夹
+docker/yolov8/ultralytics-8.3.57/
+images
+
+test_platform
+
+*.pyc
+
+*.csv
+
+*.log
+

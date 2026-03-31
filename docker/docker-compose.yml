@@ -1,0 +1,30 @@
+version: "1.0"
+
+services:
+
+  yolov8:
+    container_name: yolov8
+    build:
+      context: ./yolov8
+      dockerfile: Dockerfile
+    image: yolov8_image
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - /home/yang.yongbiao/workdir/share:/root/share
+    working_dir: /root/share
+    command: bash /root/yolov8_run.sh
+    restart: unless-stopped
+
+  goke7605:
+    container_name: goke7605
+    build:
+      context: ./export
+      dockerfile: Dockerfile
+    image: ubuntu18.04:goke7605
+    volumes:
+      - /home/yang.yongbiao/workdir/share:/root/share
+    working_dir: /root/xmedia
+    command: bash /root/goke_run.sh
+    restart: unless-stopped
