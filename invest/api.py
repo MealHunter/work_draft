@@ -244,9 +244,12 @@ async def reference():
     if df_filtered.empty:
         return {"data": [], "count": 0}
 
+    # 只返回前10条数据
+    df_top10 = df_filtered.head(10)
+
     return {
-        "data": df_filtered.to_dict('records'),
-        "count": len(df_filtered)
+        "data": df_top10.to_dict('records'),
+        "count": len(df_top10)
     }
 
 if __name__ == "__main__":

@@ -1,15 +1,15 @@
 // 键盘映射
 const NUM_KEY = {
-    "1": [409, 2505],
-    "2": [734, 2521],
-    "3": [1007, 2499],
-    "4": [422, 2678],
-    "5": [719, 2688],
-    "6": [996, 2680],
-    "7": [378, 2873],
-    "8": [720, 2862],
-    "9": [1000, 2876],
-    "0": [683, 3071]
+    "1": [380, 2386],
+    "2": [684, 2366],
+    "3": [989, 2370],
+    "4": [399, 2587],
+    "5": [684, 2603],
+    "6": [985, 2595],
+    "7": [375, 2804],
+    "8": [684, 2804],
+    "9": [985, 2804],
+    "0": [688, 3022]
 };
 
 // 解锁相关函数
@@ -39,55 +39,24 @@ function inputNumberByKeyboard(num) {
 
 
 // 买入函数
-function buyStock(stockCode, quantity) {
-    console.log("ready buy", stockCode, "amount:", quantity);
-
-    // 1️⃣ 点击股票代码输入框
-    click(670, 672);
-    sleep(500);
+function AddStock(stockCode) {
+    console.log("ready buy", stockCode);
 
     // 2️⃣ 输入股票代码
     // setText(stockCode);
     // sleep(3000);
     inputNumberByKeyboard(stockCode);
-    sleep(500);
+    sleep(1500);
 
-    // 4️⃣ 找到"买入数量"输入框
-    click(735, 1225);   // 买入数量区域
-    sleep(100);
+    // 4️⃣ 点击添加按钮
+    click(1344, 620);   // 买入数量区域
+    sleep(1500);
 
-    // 用"券商键盘"输入
-    inputNumberByKeyboard(quantity);
-    sleep(500);
 
-    // 5️⃣ 点击买入
-    let buyBtns = text("买入").find();
-    if (buyBtns.size() > 0) {
-        buyBtns.get(buyBtns.size() - 1).click();
-        console.log("✅ 点击最后一个【买入】");
-        sleep(500);
-    }
-    sleep(500);
-    // 6️⃣ 确认买入
-    let confirmBtn = textContains("确认买入").findOne(3000);
-    if (confirmBtn) {
-        confirmBtn.click();
-        console.log("✅ 买入确认完成：", stockCode);
-        sleep(500);
-    } else {
-        console.log("⚠️ 未出现确认按钮，可能已自动成交或需要手动确认");
-    }
-
-    sleep(500);
-
-    let buyAnother = textContains("再委托一笔").findOne(3000);
-    if (buyAnother) {
-        buyAnother.click();
-        console.log("✅ 点击【再委托一笔】继续下一笔");
-        sleep(500);
-    }else{
-        console.log("⚠️ 未找到【再委托一笔】，使用坐标点击继续");
-        click(1049, 1706);
+    // 删除代码，方便下一次输入
+    for (let i = 0; i < stockCode.length; i++) {
+        click(1293, 2492); // 点击"删除"键，模拟删除
+        sleep(50);
     }
 
 }
@@ -199,6 +168,7 @@ if (completedBtn) {
 
 // 添加股票
 // -----------------发送 POST 请求到服务器-----------------
+var payload = {};
 let url = "http://192.168.14.245:30003/reference";
 let res = http.postJson(url, payload, {timeout:200000});
 
@@ -211,13 +181,9 @@ let str = res.body.string();
 // 把结果打印出来，方便调试
 log("服务器返回的原始字符串:", str);
 
-/*
-// -----------------返回的结果到本地文件-----------------
-// var file = open('/storage/emulated/0/脚本/result.json', 'w');
-// file.write(str);
-// file.close();
 
-// -----------------解析结果并执行买入操作-----------------
+
+// -----------------解析结果并把参考的gp添加到列表中-----------------
 let result;
 try {
     result = JSON.parse(str);
@@ -228,25 +194,29 @@ try {
 }
 
 // result = { data: [ { code: 688229, name: "博睿数据", price: 99.0, amount: 100 } ],benjin: 94.87 }
-// result.data 就是股票列表
+// result.data 就是列表
+
 let data = result.data;
+
+// 1️⃣ 点击股票代码搜索框
+click(1353, 164);
+sleep(500);
 
 for (let i = 0; i < data.length; i++) {
     let row = data[i];
 
-    let code = row["code"];
-    let qty = parseInt(row["amount"], 10);
+    let code = row["代码"];
 
-    if (!code || !qty || qty <= 0) {
+    if (!code) {
         console.log("Skip invalid data:", JSON.stringify(row));
         continue;
     }
 
     console.log("Deal With", i + 1);
-    buyStock(code, qty);
+    AddStock(code);
 
     // 防止过快操作（非常重要）
     sleep(500);
 }
-*/
+
 // 广告位：715，2308
