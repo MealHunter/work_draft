@@ -209,7 +209,45 @@ async def buy_item(req: BuyRequest):
         "benjin": last_money
     }
 
+@app.post("/reference")
+async def reference():
+    # 获取股票数据，akshare失败时使用备用方案
+    df_zh = stock_zh_a_spot_em_self()
 
+    # 只保留需要的列
+    df_keep = df_zh[['代码', '名称', '最新价', '量比', '涨跌幅', '换手率', '总市值']]
+
+    # 删除包含任何NaN值的行
+    df_cleaned = df_keep.dropna()
+
+    # 排除掉创业板块的股票
+    no_cyb = df_cleaned[~df_cleaned['代码'].str.startswith(('300', '301'))]
+
+    no_cyb.sort_values('换手率', ascending=False, inplace=True)
+
+
+    # -----------------------------------------筛选条件---------------------------------------------------
+    df_filtered = no_cyb[
+        (no_cyb['总市值'] < 20000000000) &  # 市值小于两百亿
+        (no_cyb['换手率'] > 5) & (no_cyb['换手率'] < 10) & # 换手率在5-10之间
+        (no_cyb['量比'] > 1) &                # 量比大于1
+        (no_cyb['涨跌幅'] > 3) & (no_cyb['涨跌幅'] < 5)   # 涨幅在3%-5%之间
+    ].copy()
+    # -----------------------------------------筛选条件---------------------------------------------------
+
+    print(df_filtered)
+    # 将这个表格保存到本地
+    # df_filtered.to_csv('D:/yyb/github/draft/invest/jvji.csv', index=False)
+    print("----------------------------------------------")
+
+    # 返回JSON格式的筛选结果
+    if df_filtered.empty:
+        return {"data": [], "count": 0}
+
+    return {
+        "data": df_filtered.to_dict('records'),
+        "count": len(df_filtered)
+    }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=30003)
