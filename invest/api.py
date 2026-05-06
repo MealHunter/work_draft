@@ -159,7 +159,7 @@ async def buy_item(req: BuyRequest):
     df_cleaned = df_keep.dropna()
 
     # 排除掉创业板块的股票
-    no_cyb = df_cleaned[~df_cleaned['代码'].str.startswith(('300', '301'))]
+    no_cyb = df_cleaned[~df_cleaned['代码'].str.startswith(('300', '301', '688'))]
 
     no_cyb.sort_values('换手率', ascending=False, inplace=True)
 
@@ -221,7 +221,7 @@ async def reference():
     df_cleaned = df_keep.dropna()
 
     # 排除掉创业板块的股票
-    no_cyb = df_cleaned[~df_cleaned['代码'].str.startswith(('300', '301'))]
+    no_cyb = df_cleaned[~df_cleaned['代码'].str.startswith(('300', '301', '688'))]
 
     no_cyb.sort_values('换手率', ascending=False, inplace=True)
 
