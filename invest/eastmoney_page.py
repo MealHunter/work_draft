@@ -137,7 +137,7 @@ def stock_zh_a_spot_em_self() -> pd.DataFrame:
     # print("\n===== DataFrame预览 =====")
     # print(f"总数据量: {len(df)} 条")
 
-    driver.close()
+    # driver.close()
 
     return df
 

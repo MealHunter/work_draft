@@ -105,7 +105,7 @@ sleep(500);
 
 // 6️⃣ 点击【我的】
 // 方式一：文字（最稳）
-let myBtn = text("行情").findOne(500);
+let myBtn = text("自选").findOne(500);
 if (myBtn) {
     myBtn.click();
     console.log("click trade");
@@ -170,7 +170,7 @@ if (completedBtn) {
 // -----------------发送 POST 请求到服务器-----------------
 var payload = {};
 let url = "http://192.168.14.245:30003/reference";
-let res = http.postJson(url, payload, {timeout:200000});
+let res = http.postJson(url, payload, {timeout:300000});
 
 if (!res || res.statusCode !== 200) {
     toast("请求失败");

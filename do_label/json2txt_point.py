@@ -4,8 +4,8 @@ import os
 # ==========================
 # 路径配置
 # ==========================
-json_dir = r"C:\Users\DELL\Desktop\mp4\fish\labels_json"
-txt_dir  = r"C:\Users\DELL\Desktop\mp4\fish\labels"
+json_dir = r"C:\Users\DELL\Desktop\误报漏报视频\json"
+txt_dir  = r"C:\Users\DELL\Desktop\误报漏报视频\labels"
 
 os.makedirs(txt_dir, exist_ok=True)
 
