@@ -259,12 +259,12 @@ def print_report(result, iou_threshold=0.5):
         'image_miss_rate': image_miss_rate
     }
 
-
+ 
 if __name__ == "__main__":
     # 配置路径
-    gt_folder = r"D:\yyb\dataset\images_640\txt"           # 真实标签文件夹
+    gt_folder = r"C:\Users\DELL\Desktop\误报漏报视频\labels"           # 真实标签文件夹
     # pred_folder = r"D:\yyb\dataset\images_640\outputs3-24"        # 预测标签文件夹
-    pred_folder = r"H:\test\outputs"
+    pred_folder = r"C:\Users\DELL\Desktop\误报漏报视频\output"
     iou_threshold = 0.5                      # IoU匹配阈值
     
     # 运行评估
